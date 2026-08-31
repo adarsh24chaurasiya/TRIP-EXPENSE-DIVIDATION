@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TripSplit — Smart Group Expense Splitter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-glow-effect">
+    <div class="glow-sphere glow-emerald"></div>
+    <div class="glow-sphere glow-violet"></div>
+  </div>
+
+  <div class="app-layout">
+    <header class="main-header">
+      <div class="header-brand">
+        <div class="brand-symbol">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z"></path><path d="M13 6v2M13 11v2M13 16v2"></path></svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Trip<span>Split</span></h1>
+          <p class="brand-tagline" id="tripNameDisplay">Group Expense Splitter</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button id="btnEditTripDetails" class="control-btn" title="Rename Trip">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <span>Rename Trip</span>
+        </button>
+
+        <button id="btnResetAll" class="control-btn btn-danger-soft" title="Reset All Data">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card card-emerald">
+        <div class="kpi-icon-box">💵</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total Trip Expense</span>
+          <h2 id="bannerTotalExpense">₹0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card card-cyan">
+        <div class="kpi-icon-box">⚖️</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Equal Share Per Person</span>
+          <h2 id="bannerEqualShare">₹0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card card-purple">
+        <div class="kpi-icon-box">👥</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total Members</span>
+          <h2 id="bannerTotalMembers">0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card card-amber">
+        <div class="kpi-icon-box">🧾</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total Bills</span>
+          <h2 id="bannerTotalBills">0</h2>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-card members-section">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="section-badge-icon">👥</span>
+          <div>
+            <h3>Trip Members</h3>
+            <p class="section-desc">Friends sharing the expenses</p>
+          </div>
+        </div>
+        <div class="section-tools">
+          <span class="count-tag" id="badgeMembersCount">0 Members</span>
+          <button id="btnOpenAddMember" class="action-btn btn-emerald btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Member
+          </button>
+        </div>
+      </div>
+
+      <div id="membersContainer" class="members-chips-list"></div>
+    </section>
+
+    <div class="workspace-grid">
+      <div class="workspace-col-left">
+        <div class="app-card expense-card">
+          <div class="card-title-header">
+            <div class="title-with-badge">
+              <span class="section-badge-icon icon-purple">💳</span>
+              <div>
+                <h3 id="formExpenseHeading">Add Expense</h3>
+                <p class="section-desc">Record who paid and what was purchased</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="formAddExpense" class="modern-form">
+            <input type="hidden" id="editExpenseId" value="">
+
+            <div class="input-block">
+              <label for="payerSelect">Paid By <span class="star">*</span></label>
+              <select id="payerSelect" class="modern-input custom-select" required>
+                <option value="" disabled selected>Select who paid</option>
+              </select>
+            </div>
+
+            <div class="input-block">
+              <label for="expenseTitleInput">Expense Description <span class="star">*</span></label>
+              <input type="text" id="expenseTitleInput" class="modern-input" required placeholder="e.g. Hotel Stay, Fuel, Dinner, Sightseeing">
+            </div>
+
+            <div class="input-row-2">
+              <div class="input-block">
+                <label for="expenseAmountInput">Amount (₹) <span class="star">*</span></label>
+                <div class="currency-input-wrap">
+                  <span class="currency-sign">₹</span>
+                  <input type="number" id="expenseAmountInput" class="modern-input has-currency" required min="1" step="any" placeholder="0.00">
+                </div>
+              </div>
+
+              <div class="input-block">
+                <label for="expenseDateInput">Date (Optional)</label>
+                <input type="date" id="expenseDateInput" class="modern-input">
+              </div>
+            </div>
+
+            <div class="form-btn-row">
+              <button type="button" id="btnCancelEdit" class="action-btn btn-ghost-light hidden">Cancel</button>
+              <button type="submit" id="btnSubmitExpense" class="action-btn btn-emerald btn-full">
+                <span id="btnSubmitExpenseText">+ Save Expense</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="app-card settlement-card">
+          <div class="section-top-bar">
+            <div class="section-title-wrap">
+              <span class="section-badge-icon icon-emerald">🤝</span>
+              <div>
+                <h3>Settlement Plan</h3>
+                <p class="section-desc">Who owes whom to balance the trip</p>
+              </div>
+            </div>
+            <div class="segment-tabs">
+              <button id="tabPendingSettlements" class="tab-item active">Pending (<span id="countPendingDues">0</span>)</button>
+              <button id="tabPaidSettlements" class="tab-item">Paid (<span id="countPaidDues">0</span>)</button>
+            </div>
+          </div>
+
+          <div id="pendingSettlementsView" class="settlements-container"></div>
+          <div id="paidSettlementsView" class="settlements-container hidden"></div>
+        </div>
+      </div>
+
+      <div class="workspace-col-right">
+        <div class="app-card balances-card">
+          <div class="card-title-header">
+            <div class="title-with-badge">
+              <span class="section-badge-icon icon-cyan">📊</span>
+              <div>
+                <h3>Member Balances</h3>
+                <p class="section-desc">Individual payments and net settlement status</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="memberHisabGrid" class="balances-cards-list"></div>
+        </div>
+
+        <div class="app-card ledger-card">
+          <div class="section-top-bar">
+            <div class="section-title-wrap">
+              <span class="section-badge-icon icon-amber">🧾</span>
+              <div>
+                <h3>Expense Ledger</h3>
+                <p class="section-desc">History of all expenses recorded</p>
+              </div>
+            </div>
+            <div class="ledger-search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="filterExpensesInput" placeholder="Search expenses...">
+            </div>
+          </div>
+
+          <div id="expenseHistoryList" class="ledger-items-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalAddMemberDialog" class="modal-backdrop">
+    <div class="modal-panel">
+      <div class="modal-title-row">
+        <h3>Add Trip Member</h3>
+        <button class="modal-close-btn" data-close>&times;</button>
+      </div>
+      <form id="formAddMember">
+        <div class="input-block">
+          <label for="newMemberName">Member Name <span class="star">*</span></label>
+          <input type="text" id="newMemberName" class="modern-input" required placeholder="e.g. Rahul, Aman, Priya">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" class="action-btn btn-ghost-light" data-close>Cancel</button>
+          <button type="submit" class="action-btn btn-emerald">Add Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalEditTripDialog" class="modal-backdrop">
+    <div class="modal-panel">
+      <div class="modal-title-row">
+        <h3>Rename Trip</h3>
+        <button class="modal-close-btn" data-close>&times;</button>
+      </div>
+      <form id="formEditTrip">
+        <div class="input-block">
+          <label for="editTripNameInput">Trip Name <span class="star">*</span></label>
+          <input type="text" id="editTripNameInput" class="modern-input" required placeholder="e.g. Goa Vacation, Ladakh Trip">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" class="action-btn btn-ghost-light" data-close>Cancel</button>
+          <button type="submit" class="action-btn btn-emerald">Save Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalResetConfirmDialog" class="modal-backdrop">
+    <div class="modal-panel modal-alert-panel">
+      <div class="modal-title-row">
+        <h3>Reset Everything?</h3>
+        <button class="modal-close-btn" data-close>&times;</button>
+      </div>
+      <p class="modal-alert-desc">This action will delete all members, expenses, and settlement records permanently.</p>
+      <div class="modal-actions-row">
+        <button type="button" class="action-btn btn-ghost-light" data-close>Cancel</button>
+        <button type="button" id="btnConfirmResetAction" class="action-btn btn-danger-solid">Yes, Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMessageContainer" class="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
