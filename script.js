@@ -1,5 +1,5 @@
 const TripState = {
-  tripName: 'Group Trip Expense',
+  tripName: 'Group Trip Expenses',
   currency: '₹',
   members: [],
   expenses: [],
