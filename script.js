@@ -58,6 +58,15 @@ const TripApp = {
   bindEvents: function() {
     const self = this;
 
+    const currencySelect = document.getElementById('currencySelect');
+    currencySelect.value = TripState.currency || '₹';
+    currencySelect.addEventListener('change', () => {
+      TripState.currency = currencySelect.value;
+      TripState.save();
+      self.renderAll();
+      self.showToast('Currency updated!');
+    });
+
     document.getElementById('btnEditTripDetails').addEventListener('click', () => {
       document.getElementById('editTripNameInput').value = TripState.tripName;
       self.openModal('modalEditTripDialog');

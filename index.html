@@ -28,6 +28,21 @@
       </div>
 
       <div class="header-controls">
+        <div class="currency-select-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v12M15 9.5c0-1.38-1.34-2.5-3-2.5s-3 1.12-3 2.5S10.34 12 12 12s3 1.12 3 2.5-1.34 2.5-3 2.5-3-1.12-3-2.5"></path></svg>
+          <select id="currencySelect" class="currency-select" title="Trip Currency">
+            <option value="₹">₹ INR — Indian Rupee</option>
+            <option value="$">$ USD — US Dollar</option>
+            <option value="€">€ EUR — Euro</option>
+            <option value="£">£ GBP — British Pound</option>
+            <option value="¥">¥ JPY — Japanese Yen</option>
+            <option value="A$">A$ AUD — Australian Dollar</option>
+            <option value="C$">C$ CAD — Canadian Dollar</option>
+            <option value="AED">AED — UAE Dirham</option>
+            <option value="S$">S$ SGD — Singapore Dollar</option>
+          </select>
+        </div>
+
         <button id="btnEditTripDetails" class="control-btn" title="Rename Trip">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           <span>Rename Trip</span>

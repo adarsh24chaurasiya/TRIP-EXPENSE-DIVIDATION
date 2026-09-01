@@ -217,6 +217,45 @@ body {
   justify-content: center;
 }
 
+.currency-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.currency-select-wrap:hover {
+  border-color: var(--border-hover);
+}
+
+.currency-select-wrap svg {
+  flex-shrink: 0;
+  color: var(--saffron);
+}
+
+.currency-select {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 9px 4px;
+  outline: none;
+  cursor: pointer;
+  max-width: 160px;
+}
+
+.currency-select option {
+  background: var(--bg-surface-elevated);
+  color: var(--text-main);
+}
+
 .btn-danger-soft {
   color: #ff8f80;
   background: rgba(255, 107, 107, 0.08);
