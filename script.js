@@ -1,5 +1,5 @@
 const TripState = {
-  tripName: 'Group Trip Expenses',
+  tripName: 'Group Trip Expense',
   currency: '₹',
   members: [],
   expenses: [],
@@ -67,6 +67,14 @@ const TripApp = {
       self.showToast('Currency updated!');
     });
 
+    document.getElementById('customSplitToggle').addEventListener('change', () => {
+      self.renderSplitMembersList();
+    });
+
+    document.getElementById('expenseAmountInput').addEventListener('input', () => {
+      self.updateSplitSummary();
+    });
+
     document.getElementById('btnEditTripDetails').addEventListener('click', () => {
       document.getElementById('editTripNameInput').value = TripState.tripName;
       self.openModal('modalEditTripDialog');
@@ -114,6 +122,7 @@ const TripApp = {
       TripState.save();
       self.closeModal('modalAddMemberDialog');
       self.renderAll();
+      self.renderSplitMembersList();
       self.showToast(`Added ${name}!`);
     });
 
@@ -150,6 +159,30 @@ const TripApp = {
       const amount = parseFloat(document.getElementById('expenseAmountInput').value);
       const date = document.getElementById('expenseDateInput').value;
 
+      const checkedBoxes = Array.from(document.querySelectorAll('.split-member-checkbox')).filter(cb => cb.checked);
+      if (checkedBoxes.length === 0) {
+        self.showToast('Select at least one member to split with!');
+        return;
+      }
+      const participants = checkedBoxes.map(cb => cb.dataset.memberId);
+      const customOn = document.getElementById('customSplitToggle').checked;
+      let splits = null;
+
+      if (customOn) {
+        splits = {};
+        let sum = 0;
+        participants.forEach(id => {
+          const inp = document.querySelector(`.split-amount-input[data-member-id="${id}"]`);
+          const val = parseFloat(inp && inp.value) || 0;
+          splits[id] = val;
+          sum += val;
+        });
+        if (Math.abs(sum - amount) > 0.01) {
+          self.showToast('Custom split amounts must add up to the total amount!');
+          return;
+        }
+      }
+
       if (editId) {
         const exp = TripState.expenses.find(x => x.id === editId);
         if (exp) {
@@ -157,6 +190,9 @@ const TripApp = {
           exp.title = title;
           exp.amount = amount;
           exp.date = date;
+          exp.splitMode = customOn ? 'custom' : 'equal';
+          exp.participants = participants;
+          exp.splits = splits;
         }
         self.resetExpenseForm();
         self.showToast('Expense updated!');
@@ -166,7 +202,10 @@ const TripApp = {
           payerId: payerId,
           title: title,
           amount: amount,
-          date: date
+          date: date,
+          splitMode: customOn ? 'custom' : 'equal',
+          participants: participants,
+          splits: splits
         });
         self.resetExpenseForm();
         self.showToast('Expense added!');
@@ -230,6 +269,107 @@ const TripApp = {
     document.getElementById('btnCancelEdit').classList.add('hidden');
     document.getElementById('expenseDateInput').value = '';
     document.getElementById('payerSelect').selectedIndex = 0;
+    document.getElementById('customSplitToggle').checked = false;
+    this.renderSplitMembersList(TripState.members.map(m => m.id), {});
+  },
+
+  renderSplitMembersList: function(presetParticipants, presetSplits) {
+    const container = document.getElementById('splitMembersList');
+    const customOn = document.getElementById('customSplitToggle').checked;
+
+    const existingChecks = {};
+    document.querySelectorAll('.split-member-checkbox').forEach(cb => {
+      existingChecks[cb.dataset.memberId] = cb.checked;
+    });
+
+    let customVals = presetSplits;
+    if (!customVals) {
+      customVals = {};
+      document.querySelectorAll('.split-amount-input').forEach(inp => {
+        customVals[inp.dataset.memberId] = inp.value;
+      });
+    }
+
+    let selected = presetParticipants;
+
+    container.innerHTML = '';
+
+    if (TripState.members.length === 0) {
+      container.innerHTML = '<span style="color:var(--text-muted); font-size:0.82rem;">Add trip members first.</span>';
+      return;
+    }
+
+    TripState.members.forEach(m => {
+      const isChecked = selected ? selected.includes(m.id) : (existingChecks[m.id] !== undefined ? existingChecks[m.id] : true);
+      const row = document.createElement('div');
+      row.className = 'split-member-row';
+      row.innerHTML = `
+        <label class="split-check-label">
+          <input type="checkbox" class="split-member-checkbox" data-member-id="${m.id}" ${isChecked ? 'checked' : ''}>
+          <span class="member-avatar sm" style="background:${m.color}">${m.name.charAt(0)}</span>
+          <span>${m.name}</span>
+        </label>
+        ${customOn ? `<input type="number" class="modern-input split-amount-input" data-member-id="${m.id}" min="0" step="any" placeholder="0.00" value="${customVals[m.id] || ''}" ${!isChecked ? 'disabled' : ''}>` : ''}
+      `;
+      container.appendChild(row);
+    });
+
+    const self = this;
+    container.querySelectorAll('.split-member-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const amtInput = container.querySelector(`.split-amount-input[data-member-id="${cb.dataset.memberId}"]`);
+        if (amtInput) amtInput.disabled = !cb.checked;
+        self.updateSplitSummary();
+      });
+    });
+
+    container.querySelectorAll('.split-amount-input').forEach(inp => {
+      inp.addEventListener('input', () => self.updateSplitSummary());
+    });
+
+    this.updateSplitSummary();
+  },
+
+  updateSplitSummary: function() {
+    const bar = document.getElementById('splitSummaryBar');
+    const text = document.getElementById('splitSummaryText');
+    const customOn = document.getElementById('customSplitToggle').checked;
+    const totalAmount = parseFloat(document.getElementById('expenseAmountInput').value) || 0;
+    const cur = TripState.currency || '₹';
+
+    const checked = Array.from(document.querySelectorAll('.split-member-checkbox')).filter(cb => cb.checked);
+
+    bar.classList.remove('hidden');
+
+    if (checked.length === 0) {
+      bar.classList.add('split-error');
+      text.textContent = 'Select at least one member to split with.';
+      return;
+    }
+
+    if (!customOn) {
+      bar.classList.remove('split-error');
+      const share = totalAmount / checked.length;
+      text.textContent = `Split equally: ${cur}${share.toFixed(2)} each among ${checked.length} member${checked.length > 1 ? 's' : ''}`;
+      return;
+    }
+
+    let sum = 0;
+    checked.forEach(cb => {
+      const inp = document.querySelector(`.split-amount-input[data-member-id="${cb.dataset.memberId}"]`);
+      sum += parseFloat(inp && inp.value) || 0;
+    });
+    const diff = Math.round((totalAmount - sum) * 100) / 100;
+
+    if (Math.abs(diff) < 0.01 && totalAmount > 0) {
+      bar.classList.remove('split-error');
+      text.textContent = `✓ Custom split matches the total (${cur}${totalAmount.toFixed(2)})`;
+    } else {
+      bar.classList.add('split-error');
+      text.textContent = diff > 0
+        ? `${cur}${diff.toFixed(2)} still needs to be allocated`
+        : `${cur}${Math.abs(diff).toFixed(2)} over the total amount`;
+    }
   },
 
   renderAll: function() {
@@ -250,11 +390,11 @@ const TripApp = {
     const cur = TripState.currency || '₹';
     const totalKharcha = TripState.expenses.reduce((sum, x) => sum + (parseFloat(x.amount) || 0), 0);
     const memberCount = TripState.members.length;
-    const equalShare = memberCount > 0 ? (totalKharcha / memberCount) : 0;
+    const avgShare = memberCount > 0 ? (totalKharcha / memberCount) : 0;
     const billsCount = TripState.expenses.length;
 
     document.getElementById('bannerTotalExpense').textContent = cur + totalKharcha.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-    document.getElementById('bannerEqualShare').textContent = cur + equalShare.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    document.getElementById('bannerEqualShare').textContent = cur + avgShare.toLocaleString('en-IN', { maximumFractionDigits: 0 });
     document.getElementById('bannerTotalMembers').textContent = memberCount;
     document.getElementById('bannerTotalBills').textContent = billsCount;
     document.getElementById('badgeMembersCount').textContent = memberCount + ' Members';
@@ -285,6 +425,7 @@ const TripApp = {
           TripState.settledPayments = TripState.settledPayments.filter(s => s.fromId !== m.id && s.toId !== m.id);
           TripState.save();
           TripApp.renderAll();
+          TripApp.renderSplitMembersList();
           TripApp.showToast(`Removed ${m.name}`);
         }
       });
@@ -319,17 +460,41 @@ const TripApp = {
     }
   },
 
+  getExpenseShares: function(exp) {
+    const amt = parseFloat(exp.amount) || 0;
+
+    if (exp.splitMode === 'custom' && exp.splits) {
+      const res = {};
+      Object.keys(exp.splits).forEach(id => {
+        res[id] = parseFloat(exp.splits[id]) || 0;
+      });
+      return res;
+    }
+
+    const participants = (exp.participants && exp.participants.length)
+      ? exp.participants
+      : TripState.members.map(m => m.id);
+
+    if (participants.length === 0) return {};
+    const share = amt / participants.length;
+    const res = {};
+    participants.forEach(id => res[id] = share);
+    return res;
+  },
+
   calculateNetBalances: function() {
     const totalKharcha = TripState.expenses.reduce((sum, x) => sum + (parseFloat(x.amount) || 0), 0);
     const memberCount = TripState.members.length;
-    const equalShare = memberCount > 0 ? (totalKharcha / memberCount) : 0;
+    const avgShare = memberCount > 0 ? (totalKharcha / memberCount) : 0;
 
     const paidMap = {};
+    const oweMap = {};
     const settledSentMap = {};
     const settledReceivedMap = {};
 
     TripState.members.forEach(m => {
       paidMap[m.id] = 0;
+      oweMap[m.id] = 0;
       settledSentMap[m.id] = 0;
       settledReceivedMap[m.id] = 0;
     });
@@ -339,6 +504,11 @@ const TripApp = {
       if (paidMap[x.payerId] !== undefined) {
         paidMap[x.payerId] += amt;
       }
+
+      const shares = this.getExpenseShares(x);
+      Object.keys(shares).forEach(mid => {
+        if (oweMap[mid] !== undefined) oweMap[mid] += shares[mid];
+      });
     });
 
     TripState.settledPayments.forEach(s => {
@@ -350,10 +520,10 @@ const TripApp = {
     const netMap = {};
     TripState.members.forEach(m => {
       const effectivePaid = paidMap[m.id] + settledSentMap[m.id] - settledReceivedMap[m.id];
-      netMap[m.id] = effectivePaid - equalShare;
+      netMap[m.id] = effectivePaid - oweMap[m.id];
     });
 
-    return { totalKharcha, equalShare, paidMap, settledSentMap, settledReceivedMap, netMap };
+    return { totalKharcha, avgShare, paidMap, oweMap, settledSentMap, settledReceivedMap, netMap };
   },
 
   renderMemberHisabGrid: function() {
@@ -366,10 +536,11 @@ const TripApp = {
       return;
     }
 
-    const { equalShare, paidMap, netMap } = this.calculateNetBalances();
+    const { paidMap, oweMap, netMap } = this.calculateNetBalances();
 
     TripState.members.forEach(m => {
       const directPaid = paidMap[m.id] || 0;
+      const yourShare = oweMap[m.id] || 0;
       const net = netMap[m.id] || 0;
 
       let pillClass = 'net-zero';
@@ -395,8 +566,8 @@ const TripApp = {
           <strong>${cur}${directPaid.toFixed(0)}</strong>
         </div>
         <div class="balance-stat-row">
-          <span>Equal Share:</span>
-          <strong>${cur}${equalShare.toFixed(0)}</strong>
+          <span>Your Share:</span>
+          <strong>${cur}${yourShare.toFixed(0)}</strong>
         </div>
         <div class="net-status-pill ${pillClass}">
           <span>Net Balance:</span>
@@ -583,13 +754,15 @@ const TripApp = {
 
     list.forEach(exp => {
       const payer = TripState.members.find(m => m.id === exp.payerId) || { name: 'Unknown' };
+      const participantCount = (exp.participants && exp.participants.length) ? exp.participants.length : TripState.members.length;
+      const splitLabel = exp.splitMode === 'custom' ? 'Custom split' : `Split ${participantCount} way${participantCount > 1 ? 's' : ''}`;
 
       const row = document.createElement('div');
       row.className = 'ledger-row';
       row.innerHTML = `
         <div class="ledger-left">
           <span class="ledger-title">${exp.title}</span>
-          <span class="ledger-sub">Paid by: <strong>${payer.name}</strong> ${exp.date ? '• ' + exp.date : ''}</span>
+          <span class="ledger-sub">Paid by: <strong>${payer.name}</strong> ${exp.date ? '• ' + exp.date : ''} • ${splitLabel}</span>
         </div>
         <div class="ledger-right">
           <span class="ledger-amt">${cur}${parseFloat(exp.amount).toFixed(0)}</span>
@@ -611,6 +784,14 @@ const TripApp = {
         document.getElementById('formExpenseHeading').textContent = 'Edit Expense';
         document.getElementById('btnSubmitExpenseText').textContent = 'Update Expense';
         document.getElementById('btnCancelEdit').classList.remove('hidden');
+
+        const isCustom = exp.splitMode === 'custom';
+        document.getElementById('customSplitToggle').checked = isCustom;
+        const participants = (exp.participants && exp.participants.length)
+          ? exp.participants
+          : TripState.members.map(m => m.id);
+        TripApp.renderSplitMembersList(participants, exp.splits || {});
+
         window.scrollTo({ top: 300, behavior: 'smooth' });
       });
 

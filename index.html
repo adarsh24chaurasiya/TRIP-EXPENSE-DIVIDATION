@@ -34,6 +34,9 @@
             <option value="₹">₹ INR — Indian Rupee</option>
             <option value="$">$ USD — US Dollar</option>
             <option value="€">€ EUR — Euro</option>
+            <option value="£">£ GBP — British Pound</option>
+            <option value="¥">¥ JPY — Japanese Yen</option>
+            <option value="A$">A$ AUD — Australian Dollar</option>
             <option value="C$">C$ CAD — Canadian Dollar</option>
             <option value="AED">AED — UAE Dirham</option>
             <option value="S$">S$ SGD — Singapore Dollar</option>
@@ -64,7 +67,7 @@
       <div class="kpi-card card-cyan">
         <div class="kpi-icon-box">⚖️</div>
         <div class="kpi-content">
-          <span class="kpi-label">Equal Share Per Person</span>
+          <span class="kpi-label">Avg Share Per Person</span>
           <h2 id="bannerEqualShare">₹0</h2>
         </div>
       </div>
@@ -147,6 +150,21 @@
               <div class="input-block">
                 <label for="expenseDateInput">Date (Optional)</label>
                 <input type="date" id="expenseDateInput" class="modern-input">
+              </div>
+            </div>
+
+            <div class="input-block">
+              <div class="split-header-row">
+                <label>Split Between <span class="star">*</span></label>
+                <label class="custom-split-toggle">
+                  <input type="checkbox" id="customSplitToggle">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  <span class="toggle-label-text">Custom amounts</span>
+                </label>
+              </div>
+              <div id="splitMembersList" class="split-members-list"></div>
+              <div id="splitSummaryBar" class="split-summary-bar hidden">
+                <span id="splitSummaryText"></span>
               </div>
             </div>
 
